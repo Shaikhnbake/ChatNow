@@ -52,7 +52,7 @@ export default class Start extends React.Component {
                                  />
                             </View>
                         </View>
-                        <Button
+                        <TouchableOpacity
                             style={styles.startChatButton}
                             title="Start Chatting!"
                             onPress={() => 
@@ -63,7 +63,7 @@ export default class Start extends React.Component {
                             }
                         > 
                             <Text style={styles.buttonText}>Start Chatting</Text>
-                        </Button>
+                        </TouchableOpacity>
                     </View>
                 </ImageBackground>
             </View>
