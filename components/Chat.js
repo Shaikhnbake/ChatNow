@@ -12,7 +12,12 @@ export default class Chat extends React.Component {
         super();
         this.state = { 
             messages: [],
-            uid: 0
+            uid: 0,
+            user: {
+                _id: '',
+                avatar: '',
+                name: ''
+            }
         }
         
         const firebaseConfig = {
@@ -41,7 +46,8 @@ onCollectionUpdate = (querySnapshot) => {
             createdAt: data.createdAt.toDate(),
             user: {
                 _id: data.user._id,
-                name: data.user.name
+                name: data.user.name,
+                avatar: data.user.avatar
             }
         });
     });
