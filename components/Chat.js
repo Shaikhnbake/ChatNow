@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { View, Platform, KeyboardAvoidingView, Text } from 'react-native';
-
-import { Bubble, GiftedChat } from "react-native-gifted-chat";
+import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 
 const firebase = require('firebase');
 require('firebase/firestore');
@@ -47,7 +48,7 @@ onCollectionUpdate = (querySnapshot) => {
             user: {
                 _id: data.user._id,
                 name: data.user.name,
-                avatar: data.user.avatar
+                avatar: data.user.avatar || ''
             }
         });
     });
@@ -61,8 +62,41 @@ addMessages() {
         _id: message._id,
         text: message.text,
         createdAt: message.createdAt,
-        user: message.user
+        user: message.user,
+        uid: this.state.uid
     });
+}
+
+// Asynchronous function that retreives saved messages data
+async getMessages(){
+    let messages = '';
+    try {
+        messages = await AsyncStorage.getItem('messages') || [];
+        this.setState({
+            messages: JSON.parse(messages)
+        });
+    } catch (error) {
+        console.log(error.message);
+    }
+};
+
+//// Asynchronous function that saves messages data when sent
+async saveMessages(){
+    try {
+        await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+//// Asynchronous function that deletes saved messages
+async deleteMessages(){
+    try {
+        await AsyncStorage.removeItem('messages');
+        this.setState({ messages: [] })
+    } catch (error) {
+        console.log(error.message);
+    }
 }
 
     
@@ -72,7 +106,23 @@ addMessages() {
         let { name } = this.props.route.params;
         this.props.navigation.setOptions({ title: name });
         
+        //Loads all users saved messages into chatroom
+        this.getMessages();
+        
+        //Checks users connection status
+        NetInfo.fetch().then(connection => {
+            if(connection.isConnected) {
+                this.setState({ isConnected: true });
+                console.log('online');
+            } else {
+                this.setState({ isConnected: false });
+                console.log('offline');
+            }
+        });
+
         this.refrenceChatMessages = firebase.firestore().collection('messages');
+
+
 
         //Checks if user is signed in // create new user
         this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
@@ -95,13 +145,22 @@ addMessages() {
         this.authUnsubscribe();
     }
 
-    //Render function adds new message to current message list 
+    //Render function adds new message to current message list + saves it to async storage
     onSend(messages = []) {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, messages)
         }), () => {
             this.addMessages();
+            this.saveMessages();
         });
+    }
+
+    //Renders the chat box only if user is online
+    renderInputToolbar(props) {
+        if(this.state.isConnected === false){
+        } else {
+            return ( <InputToolbar {...props} /> );
+        }
     }
 
 
@@ -131,7 +190,7 @@ addMessages() {
                     renderBubble={this.renderBubble.bind(this)}
                     messages={this.state.messages}
                     onSend={messages => this.onSend(messages)}
-                    user={{ _id: this.state.uid }}
+                    user={{ _id: this.state.uid, avatar: this.state.avatar }}
                 />
                 <Text>{this.state.loggedInText}</Text>
                 {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
