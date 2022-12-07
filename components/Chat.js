@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
+import React, { Component } from "react";
 import { View, Platform, KeyboardAvoidingView, Text } from 'react-native';
 import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
+
 
 const firebase = require('firebase');
 require('firebase/firestore');
@@ -188,9 +189,10 @@ async deleteMessages(){
             >
                 <GiftedChat
                     renderBubble={this.renderBubble.bind(this)}
+                    renderInputToolbar={this.renderInputToolbar.bind(this)}
                     messages={this.state.messages}
                     onSend={messages => this.onSend(messages)}
-                    user={{ _id: this.state.uid, avatar: this.state.avatar }}
+                    user={{ _id: this.state.uid,  avatar: 'https://i.pravatar.cc/150?img=64'  }}
                 />
                 <Text>{this.state.loggedInText}</Text>
                 {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
