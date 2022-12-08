@@ -1,4 +1,4 @@
-import React from "react";
+import React, {Component} from "react";
 import { View, Text, Button, TextInput, ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
 
 // DECLARED COLORS FOR BACKGROUND
