@@ -28,7 +28,7 @@ Android Studio's Emulator:
   ```
 4. Open Virtual Device Manager to create a new device.
 5. Click **Play** to start the device.
-6. Run on Android Device/Emulator (press 'a' in terminal) in Expo to run app on virtual device.
+6. Run on Android Device/Emulator in Expo to run app on virtual device.
 
 
 ## Tech Stack
