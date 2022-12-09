@@ -21,7 +21,10 @@ export default class Chat extends React.Component {
                 _id: '',
                 avatar: '',
                 name: ''
-            }
+            },
+            isConnected: false,
+            image: null,
+            location: null
         }
         
         const firebaseConfig = {
@@ -52,7 +55,9 @@ onCollectionUpdate = (querySnapshot) => {
                 _id: data.user._id,
                 name: data.user.name,
                 avatar: data.user.avatar || ''
-            }
+            },
+            image: data.image || null,
+            location: data.location || null
         });
     });
     this.setState({ messages });
@@ -63,10 +68,12 @@ addMessages() {
     let message = this.state.messages[0];
     this.refrenceChatMessages.add({
         _id: message._id,
-        text: message.text,
+        text: message.text || '',
         createdAt: message.createdAt,
         user: message.user,
-        uid: this.state.uid
+        uid: this.state.uid,
+        image: message.image || null,
+        location: message.location || null
     });
 }
 
@@ -186,7 +193,8 @@ async deleteMessages(){
     }
     renderCustomView(props) {
         const { currentMessage } = props;
-        if(currentMessage.location) {
+        
+        if (currentMessage.location) {
             return (
                 <MapView
                     style = {{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
@@ -216,7 +224,7 @@ async deleteMessages(){
                     <GiftedChat
                         renderBubble={this.renderBubble.bind(this)}
                         renderInputToolbar={this.renderInputToolbar.bind(this)}
-                        renderActions={this.renderCustomActions.bind(this)}
+                        renderActions={this.renderCustomActions}
                         renderCustomView={this.renderCustomView}
                         messages={this.state.messages}
                         onSend={messages => this.onSend(messages)}
@@ -261,6 +269,15 @@ DEMO CODE . can insert inside component did mount if you do not wish to use fire
             ]
         });
 
+
+        if (currentMessage.image) {
+            return (
+                <Image
+                    source={{ uri: this.state.image }}
+                    style={{ width: 200, height: 200 }}
+                />
+            );
+        }
 
 */}
 

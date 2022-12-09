@@ -4,56 +4,78 @@ import PropTypes from 'prop-types';
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { connectActionSheet } from '@expo/react-native-action-sheet';
+
 import firebase from 'firebase';
 import { firestore } from 'firebase';
 
 export default class CustomActions extends Component {
     //function asks user permission before allowing user to choose photo from their library
     pickImage = async () => {
-        const {status} = await Permissions.askAsync(Permissions.MEDIA_LIBRARY);
+        const { status } = await Permissions.askAsync(Permissions.MEDIA_LIBRARY);
 
-        if(status === 'granted'){
-            let result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images
-            }).catch(error => console.log(error));
+        try {
+            if (status === 'granted') {
+                let result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images
+                }).catch(error => console.log(error));
 
-            if (!result.canceled) {
-                this.setState({ image: result });
-            }
-        } 
+                if (!result.canceled) {
+                    let imageUrl = await this.uploadImageFetch(result.uri);
+                    this.props.onSend({ image: imageUrl });
+                }
+            } 
+        } catch (error) {
+            console.log(error.message);
+        }
     }
 
     //function asks user permission before allowing user to take photo with their camera
     takePhoto = async () => {
-        const {status} = await Permissions.askAsync(
+        const { status } = await Permissions.askAsync(
             Permissions.MEDIA_LIBRARY, 
             Permissions.CAMERA
         );
+        
+        try {
+            if (status === 'granted') {
+                let result = await ImagePicker.launchCameraAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images
+                }).catch(error => console.log(error));
 
-        if(status === 'granted'){
-            let result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images
-            }).catch(error => console.log(error));
-
-            if (!result.canceled) {
-                this.setState({ image: result });
-            }
+                if (!result.canceled) {
+                    let imageUrl = await this.uploadImageFetch(result.uri);
+                    this.props.onSend({ image: imageUrl });
+                }
+            } 
+        } catch (error) {
+            console.log(error.message);
         }
-
     }
 
     //function asks user permission before allowing user share their location
     getLocation = async () => {
-        const {status} = await Permissions.askAsync(Permissions.LOCATION_FOREGROUND);
+        try {
+            const { status } = await Permissions.askAsync(Permissions.LOCATION_FOREGROUND);
+            if (status === 'granted') {
+                    let result = await Location.getCurrentPositionAsync(
+                        {}
+                    ).catch((error) => console.log(error));
 
-        if (status === 'granted') {
-            let result = await Location.getCurrentPositionAsync({});
-            
-            if (result){
-                this.setState({
-                    location: result
-                })
-            }
+                    const longitude = JSON.stringify(result.coords.longitude);
+                    const latitude = JSON.stringify(result.coords.latitude);
+                
+                    if (result) {
+                        this.props.onSend({
+                            location: {
+                                longitude: result.coords.longitude,
+                                latitude: result.coords.latitude
+                            }
+                        });
+                    }
+                } 
+        } catch (error) {
+            console.log(error.message);
         }
     }
 
@@ -65,7 +87,7 @@ export default class CustomActions extends Component {
             'Cancel'
         ]
         const cancelButtonIndex = options.length - 1;
-        this.context.actionSheet().showActionSheetWithOptions({
+        this.props.showActionSheetWithOptions({
             options,
             cancelButtonIndex
         },
@@ -103,7 +125,7 @@ export default class CustomActions extends Component {
         // Creates firebase data of Blob
         const imageNameBefore = uri.split('/');
         const imageName = imageNameBefore[imageNameBefore.length - 1];
-        const ref = firebase.storage().ref().child('my-image');
+        const ref = firebase.storage().ref().child(`images/${imageName}`);
         const snapshot = await ref.put(blob);
 
         blob.close();
@@ -120,7 +142,7 @@ export default class CustomActions extends Component {
                 style={styles.container}
                 onPress={this.onActionPress}
             >
-                <View style = {[styles.wrapper, this.props.wrapperStyle]}>
+                <View style ={[styles.wrapper, this.props.wrapperStyle]}>
                     <Text style={[styles.iconText, this.props.iconTextStyle]}>+</Text>
                 </View>
             </TouchableOpacity>
@@ -151,3 +173,5 @@ const styles = StyleSheet.create({
 });
 
 CustomActions.contextTypes = { actionSheet: PropTypes.func };
+
+CustomActions = connectActionSheet(CustomActions);
